@@ -19,7 +19,7 @@ from __future__ import print_function
 
 from builtins import str
 from builtins import range
-import collections
+import collections.abc
 __author__ = 'Bruce Leban'
 
 # system modules
@@ -184,10 +184,10 @@ def _ExpandInclude(_, filename, template, specials, params, name):
 def _ExpandFor(tag, template, specials, block_data):
   """Expands a for block iterating over the block_data."""
   result = []
-  if isinstance(block_data, collections.Mapping):
+  if isinstance(block_data, collections.abc.Mapping):
     for v in block_data:
       result.append(ExpandTemplate(template, specials, block_data[v], v))
-  elif isinstance(block_data, collections.Sequence):
+  elif isinstance(block_data, collections.abc.Sequence):
     for i in range(len(block_data)):
       result.append(ExpandTemplate(template, specials, block_data[i], str(i)))
   else:
@@ -248,7 +248,7 @@ def _ExpandValue(var, specials, params, name, default):
       v = params
     if v.startswith('*'):
       v = _GetValue(specials['_params'], v[1:])
-      if isinstance(v, collections.Sequence):
+      if isinstance(v, collections.abc.Sequence):
         v = v[0]  # reduce repeated url param to single value
     value = _GetValue(value, str(v), default)
   return value
@@ -263,9 +263,9 @@ def _GetValue(collection, index, default=''):
   Returns:
     value
   """
-  if isinstance(collection, collections.Mapping) and index in collection:
+  if isinstance(collection, collections.abc.Mapping) and index in collection:
     value = collection[index]
-  elif (isinstance(collection, collections.Sequence) and index.isdigit() and
+  elif (isinstance(collection, collections.abc.Sequence) and index.isdigit() and
         int(index) < len(collection)):
     value = collection[int(index)]
   else:
