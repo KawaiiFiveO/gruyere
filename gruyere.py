@@ -660,33 +660,29 @@ class GruyereRequestHandler(BaseHTTPRequestHandler):
     self._SendTextResponse('Server reset to default values...', None)
 
   def _DoUpload2(self, cookie, specials, params):
-    """Handles the /upload2 url: finish the upload and save the file.
+      """Handles the /upload2 URL: finish the upload and save the file.
 
-    Args:
-      cookie: The cookie for this request.
-      specials: Other special values for this request.
-      params: Cgi parameters. (unused)
-    """
-    (filename, file_data) = self._ExtractFileFromRequest()
-    directory = self._MakeUserDirectory(cookie[COOKIE_UID])
+      Args:
+          cookie: The cookie for this request.
+          specials: Other special values for this request.
+          params: CGI parameters. (unused)
+      """
+      (filename, file_data) = self._ExtractFileFromRequest()
+      directory = self._MakeUserDirectory(cookie[COOKIE_UID])
 
-    message = None
-    url = None
-    try:
-      f = _Open(directory, filename, 'wb')
-      f.write(file_data)
-      f.close()
-      (host, port) = http_server.server_address
-      url = 'http://%s:%d/%s/%s/%s' % (
-          host, port, specials[SPECIAL_UNIQUE_ID], cookie[COOKIE_UID], filename)
-    except IOError as ex:
-      message = 'Couldn\'t write file %s: %s' % (filename, ex.message)
-      _Log(message)
+      message = None
+      url = None
+      try:
+          with open(f"{directory}/{filename}", 'wb') as f:
+              f.write(file_data)
+          (host, port) = http_server.server_address
+          url = f'http://{host}:{port}/{specials[SPECIAL_UNIQUE_ID]}/{cookie[COOKIE_UID]}/{filename}'
+      except IOError as ex:
+          message = f'Couldn\'t write file {filename}: {ex}'
+          self._Log(message)
 
-    specials['_message'] = message
-    self._SendTemplateResponse(
-        '/upload2.gtl', specials,
-        {'url': url})
+      specials['_message'] = message
+      self._SendTemplateResponse('/upload2.gtl', specials, {'url': url})
 
   def _ExtractFileFromRequest(self):
     """Extracts the file from an upload request.
@@ -889,12 +885,8 @@ class WSGIHandler(GruyereRequestHandler):
 
     def send_response(self, code):
         """Send an HTTP response."""
-        headers = list(self.headers.items())
-        # Check if a cookie needs to be set
-        if hasattr(self, 'new_cookie_text'):
-            headers.append(('Set-Cookie', self.new_cookie_text))
-        self.start_response(f"{code} {self.responses[code][0]}", headers)
-    
+        # Call the start_response callback with headers as a list of tuples
+        self.start_response(f"{code} {self.responses[code][0]}", list(self.headers.items()))
 
     def end_headers(self):
         """End the headers."""
