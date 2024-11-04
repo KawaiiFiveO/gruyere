@@ -17,7 +17,7 @@
 <div class='message'>{{_message}}</div>
 [[/if:_message]]
 
-<form method='get' action='/{{_unique_id}}/saveprofile'>
+<form method='get' action='/saveprofile'>
 <input type='hidden' name='action' value='new'>
 
 <table><tr><td>

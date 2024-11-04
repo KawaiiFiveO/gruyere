@@ -11,14 +11,14 @@
 <h2>Gruyere: Manage the server</h2>
 
 <div class='content'>
-<form method='get' action='/{{_unique_id}}/editprofile.gtl'>
+<form method='get' action='/editprofile.gtl'>
 <p>Edit a user's profile:
 <input type='text' name='uid'>
     <input type='submit' value='Edit'>
 </p>
 </form>
-<p><a href='/{{_unique_id}}/reset'>Reset the server</a></p>
-<p><a href='/{{_unique_id}}/quitserver'>Quit the server</a></p>
+<p><a href='/reset'>Reset the server</a></p>
+<p><a href='/quitserver'>Quit the server</a></p>
 </div>
 </body>
 

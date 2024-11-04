@@ -4,7 +4,7 @@
 <head>
 <title>Gruyere: Snippets</title>
 [[include:base.css]][[/include:base.css]]
-<script src="/{{_unique_id}}/lib.js" text="text/javascript">
+<script src="/lib.js" text="text/javascript">
 </script>
 </head>
 
@@ -80,7 +80,7 @@
               <script>document.write({{_key}} + 1)</script>&nbsp;&nbsp;
             </td>
             <td valign='top'>
-              <a href='/{{_unique_id}}/deletesnippet?index={{_key}}'>[X]</a>&nbsp;
+              <a href='/deletesnippet?index={{_key}}'>[X]</a>&nbsp;
             </td>
             <td valign='top'>
               <div id='{{_key}}'>

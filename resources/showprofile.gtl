@@ -18,7 +18,7 @@
 [[/if:_message]]
 
 <div>
-<form method='get' action='/{{_unique_id}}/set'>
+<form method='get' action='/set'>
 <table><tr><td>
     User name:
   </td><td>

@@ -18,7 +18,7 @@
 [[/if:_message]]
 
 <div>
-<form method='post' enctype='multipart/form-data' action='/{{_unique_id}}/upload2'>
+<form method='post' enctype='multipart/form-data' action='/upload2'>
 <table>
 <tr><td>
     <input type='file' name='upload_file' size='50'>

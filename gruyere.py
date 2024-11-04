@@ -50,8 +50,8 @@ import gtl
 DB_FILE = '/stored-data.txt'
 SECRET_FILE = '/secret.txt'
 
-INSTALL_PATH = '.'
-RESOURCE_PATH = 'resources'
+INSTALL_PATH = '/home/OneHalf/gruyere'
+RESOURCE_PATH = '/home/OneHalf/gruyere/resources'
 
 SPECIAL_COOKIE = '_cookie'
 SPECIAL_PROFILE = '_profile'
@@ -65,10 +65,10 @@ COOKIE_AUTHOR = 'is_author'
 
 
 # Set to True to cause the server to exit after processing the current url.
-quit_server = False
+#quit_server = False
 
 # A global copy of the database so that _GetDatabase can access it.
-stored_data = None
+#stored_data = None
 
 # The HTTPServer object.
 http_server = None
@@ -92,55 +92,60 @@ RESOURCE_CONTENT_TYPES = {
 }
 
 
-def main():
-  _SetWorkingDirectory()
+#def main():
+#  _SetWorkingDirectory()
+#
+#  global quit_server
+#  quit_server = False
+#
+#  quit_timer = threading.Timer(7200, lambda: _Exit('Timeout'))
+#  quit_timer.start()
+#
+#  server_name = 'localhost'
+#  server_port = 8008
+#
+#  # The unique id is created from a CSPRNG.
+#  try:
+#    r = random.SystemRandom()
+#  except NotImplementedError:
+#    _Exit('Could not obtain a CSPRNG source')
+#
+#  global server_unique_id
+#  server_unique_id = str(r.randint(2**128, 2**(128+1)))
+#
+#
+#
+#  global http_server
+#  http_server = HTTPServer((server_name, server_port),
+#                           GruyereRequestHandler)
+#
+#  print('''
+#      Gruyere started...
+#          http://%s:%d/
+#          http://%s:%d/%s/''' % (
+#              server_name, server_port, server_name, server_port,
+#              server_unique_id), file=sys.stderr)
+#
+#  global stored_data
+#  stored_data = _LoadDatabase()
+#
+#  while not quit_server:
+#    try:
+#      http_server.handle_request()
+#      _SaveDatabase(stored_data)
+#    except KeyboardInterrupt:
+#      print('\nReceived KeyboardInterrupt', file=sys.stderr)
+#      quit_server = True
+#
+#  print('\nClosing', file=sys.stderr)
+#  http_server.socket.close()
+#  _Exit('quit_server')
 
-  global quit_server
-  quit_server = False
+global quit_server
+quit_server = False
 
-  quit_timer = threading.Timer(7200, lambda: _Exit('Timeout'))
-  quit_timer.start()
-
-  server_name = 'localhost'
-  server_port = 8008
-
-  # The unique id is created from a CSPRNG.
-  try:
-    r = random.SystemRandom()
-  except NotImplementedError:
-    _Exit('Could not obtain a CSPRNG source')
-
-  global server_unique_id
-  server_unique_id = str(r.randint(2**128, 2**(128+1)))
-
-
-
-  global http_server
-  http_server = HTTPServer((server_name, server_port),
-                           GruyereRequestHandler)
-
-  print('''
-      Gruyere started...
-          http://%s:%d/
-          http://%s:%d/%s/''' % (
-              server_name, server_port, server_name, server_port,
-              server_unique_id), file=sys.stderr)
-
-  global stored_data
-  stored_data = _LoadDatabase()
-
-  while not quit_server:
-    try:
-      http_server.handle_request()
-      _SaveDatabase(stored_data)
-    except KeyboardInterrupt:
-      print('\nReceived KeyboardInterrupt', file=sys.stderr)
-      quit_server = True
-
-  print('\nClosing', file=sys.stderr)
-  http_server.socket.close()
-  _Exit('quit_server')
-
+global server_unique_id
+server_unique_id = str(random.randint(2**128, 2**(128 + 1)))
 
 def _Exit(reason):
   # use os._exit instead of sys.exit because this can't be trapped
@@ -439,20 +444,28 @@ class GruyereRequestHandler(BaseHTTPRequestHandler):
       self._SendRedirect(redirect, specials[SPECIAL_UNIQUE_ID])
 
   def _SendHtmlResponse(self, html, new_cookie_text=None):
-    """Sends the provided html response with appropriate headers.
+      """Sends the provided HTML response with appropriate headers.
 
-    Args:
-      html: The response.
-      new_cookie_text: New cookie to set.
-    """
-    self.send_response(200)
-    self.send_header('Content-type', 'text/html')
-    self.send_header('Pragma', 'no-cache')
-    if new_cookie_text:
-      self.send_header('Set-Cookie', new_cookie_text)
-    self.send_header('X-XSS-Protection', '0')
-    self.end_headers()
-    self.wfile.write(html.encode())
+      Args:
+        html: The response HTML.
+        new_cookie_text: New cookie to set.
+      """
+      # Send the response headers
+      self.send_response(200)
+      self.send_header('Content-type', 'text/html')
+      self.send_header('Pragma', 'no-cache')
+
+      if new_cookie_text:
+          self.send_header('Set-Cookie', new_cookie_text)
+
+      self.send_header('X-XSS-Protection', '0')
+
+      # Instead of ending headers and writing to wfile, we simply collect the response body
+      self.end_headers()
+
+      # Write the HTML response to the response body
+      self.write(html.encode())  # Collect the HTML as bytes
+
 
   def _SendTextResponse(self, text, new_cookie_text=None):
     """Sends a verbatim text response."""
@@ -481,42 +494,50 @@ class GruyereRequestHandler(BaseHTTPRequestHandler):
         new_cookie_text)
 
   def _SendFileResponse(self, filename, cookie, specials, params):
-    """Sends the contents of a file.
+      """Sends the contents of a file.
 
-    Args:
-      filename: The file to send.
-      cookie: The cookie for this request.
-      specials: Other special values for this request.
-      params: Cgi parameters.
-    """
-    content_type = None
-    if filename.endswith('.gtl'):
-      self._SendTemplateResponse(filename, specials, params)
-      return
+      Args:
+        filename: The file to send.
+        cookie: The cookie for this request.
+        specials: Other special values for this request.
+        params: CGI parameters.
+      """
+      content_type = None
+      if filename.endswith('.gtl'):
+          self._SendTemplateResponse(filename, specials, params)
+          return
 
-    name_only = filename[filename.rfind('/'):]
-    extension = name_only[name_only.rfind('.'):]
-    if '.' not in extension:
-      content_type = 'text/plain'
-    elif extension in RESOURCE_CONTENT_TYPES:
-      content_type = RESOURCE_CONTENT_TYPES[extension]
-    else:
-      self._SendError(
-          'Unrecognized file type (%s).' % (filename,),
-          cookie, specials, params)
-      return
-    f = None
-    try:
-      f = _Open(RESOURCE_PATH, filename, 'rb')
-      self.send_response(200)
-      self.send_header('Content-type', content_type)
-      # Always cache static resources
-      self.send_header('Cache-control', 'public, max-age=7200')
-      self.send_header('X-XSS-Protection', '0')
-      self.end_headers()
-      self.wfile.write(f.read())
-    finally:
-      if f: f.close()
+      name_only = filename[filename.rfind('/'):]
+      extension = name_only[name_only.rfind('.'):]
+
+      if '.' not in extension:
+          content_type = 'text/plain'
+      elif extension in RESOURCE_CONTENT_TYPES:
+          content_type = RESOURCE_CONTENT_TYPES[extension]
+      else:
+          self._SendError(
+              'Unrecognized file type (%s).' % (filename,),
+              cookie, specials, params)
+          return
+
+      f = None
+      try:
+          f = _Open(RESOURCE_PATH, filename, 'rb')
+          file_contents = f.read()  # Read the file contents into memory
+
+          self.send_response(200)  # Send the response status
+          self.send_header('Content-type', content_type)  # Set the content type
+          # Always cache static resources
+          self.send_header('Cache-control', 'public, max-age=7200')
+          self.send_header('X-XSS-Protection', '0')
+          self.end_headers()  # End the headers
+
+          # Write the file contents to the response body
+          self.write(file_contents)  # Collect the file contents as bytes
+      finally:
+          if f:
+              f.close()  # Ensure the file is closed properly
+
 
   def _SendError(self, message, cookie, specials, params, new_cookie_text=None):
     """Sends an error message (using the error.gtl template).
@@ -704,29 +725,35 @@ class GruyereRequestHandler(BaseHTTPRequestHandler):
     return directory
 
   def _SendRedirect(self, url, unique_id):
-    """Sends a 302 redirect.
+      """Sends a 302 redirect.
 
-    Automatically adds the unique_id.
+      Automatically adds the unique_id.
 
-    Args:
-      url: The location to redirect to which must start with '/'.
-      unique_id: The unique id to include in the url.
-    """
-    if not url:
-      url = '/'
-    url = '/' + unique_id + url
-    self.send_response(302)
-    self.send_header('Location', url)
-    self.send_header('Pragma', 'no-cache')
-    self.send_header('Content-type', 'text/html')
-    self.send_header('X-XSS-Protection', '0')
-    self.end_headers()
-    res = u'''<!DOCTYPE HTML PUBLIC '-//W3C//DTD HTML//EN'>
-    <html><body>
-    <title>302 Redirect</title>
-    Redirected <a href="%s">here</a>
-    </body></html>''' % (url)
-    self.wfile.write(res.encode())
+      Args:
+        url: The location to redirect to which must start with '/'.
+        unique_id: The unique id to include in the url.
+      """
+      if not url:
+          url = '/'
+
+      #url = '/' + unique_id + url  # Build the redirect URL
+      self.send_response(302)  # Set the response status to 302
+      self.send_header('Location', url)  # Set the Location header
+      self.send_header('Pragma', 'no-cache')  # No cache
+      self.send_header('Content-type', 'text/html')  # Content type
+      self.send_header('X-XSS-Protection', '0')  # XSS protection header
+      self.end_headers()  # End the headers
+
+      # Prepare the response body for the redirect message
+      res = f'''<!DOCTYPE HTML PUBLIC '-//W3C//DTD HTML//EN'>
+      <html><body>
+      <title>302 Redirect</title>
+      Redirected <a href="{url}">here</a>
+      </body></html>'''
+
+      # Write the response body
+      self.write(res.encode())  # Collect the response message as bytes
+
 
   def _GetHandlerFunction(self, path):
     try:
@@ -749,25 +776,25 @@ class GruyereRequestHandler(BaseHTTPRequestHandler):
 
    #Network Security settings
 
-    allowed_ips = ['127.0.0.1']
+    #allowed_ips = ['127.0.0.1']
+#
+    #request_ip = self.client_address[0]
+    #if request_ip not in allowed_ips:
+    #  print((
+    #      'DANGER! Request from bad ip: ' + request_ip), file=sys.stderr)
+    #  _Exit('bad_ip')
 
-    request_ip = self.client_address[0]
-    if request_ip not in allowed_ips:
-      print((
-          'DANGER! Request from bad ip: ' + request_ip), file=sys.stderr)
-      _Exit('bad_ip')
+    #if (server_unique_id not in path
+    #    and path != '/favicon.ico'):
+    #  if path == '' or path == '/':
+    #    self._SendRedirect('/', server_unique_id)
+    #    return
+    #  else:
+    #    print((
+    #        'DANGER! Request without unique id: ' + path), file=sys.stderr)
+    #    #_Exit('bad_id')
 
-    if (server_unique_id not in path
-        and path != '/favicon.ico'):
-      if path == '' or path == '/':
-        self._SendRedirect('/', server_unique_id)
-        return
-      else:
-        print((
-            'DANGER! Request without unique id: ' + path), file=sys.stderr)
-        #_Exit('bad_id')
-
-    path = path.replace('/' + server_unique_id, '', 1)
+    #path = path.replace('/' + server_unique_id, '', 1)
 
 
 
@@ -817,6 +844,83 @@ class GruyereRequestHandler(BaseHTTPRequestHandler):
 def _Log(message):
   print(message, file=sys.stderr)
 
+class WSGIHandler(GruyereRequestHandler):
+    """WSGI handler that integrates with the WSGI server."""
 
-if __name__ == '__main__':
-  main()
+    def __init__(self, environ, start_response):
+        # Initialize base class
+        self.environ = environ
+        self.start_response = start_response
+
+        # Extract necessary information from environ
+        self.requestline = f"{environ['REQUEST_METHOD']} {environ['PATH_INFO']} HTTP/1.1"
+        self.command = environ['REQUEST_METHOD']
+        self.path = environ['PATH_INFO']
+        self.request_version = "HTTP/1.1"  # Set the request version
+
+        # Prepare headers and convert them to a dict-like structure
+        self.headers = self._build_headers(environ)
+
+        # Prepare input stream
+        self.rfile = environ['wsgi.input']
+        # Initialize an empty list to collect response body data
+        self.response_body = []
+
+    def _build_headers(self, environ):
+        """Build headers from WSGI environ."""
+        headers = {}
+        for key, value in environ.items():
+            if key.startswith('HTTP_'):
+                # Convert HTTP_X_Y_Z to X-Y-Z
+                header_key = key[5:].replace('_', '-').title()
+                headers[header_key] = value
+        return headers
+
+    def send_response(self, code):
+        """Send an HTTP response."""
+        # Call the start_response callback with headers as a list of tuples
+        self.start_response(f"{code} {self.responses[code][0]}", list(self.headers.items()))
+
+    def end_headers(self):
+        """End the headers."""
+        pass
+
+    def write(self, data):
+        """Collect response data."""
+        self.response_body.append(data)
+
+    def flush(self):
+        """Flush the collected response data."""
+        # Combine the collected data into a bytes object
+        response_data = b''.join(self.response_body)
+        return response_data  # Return response data for WSGI to send
+
+
+
+def application(environ, start_response):
+    """WSGI application using the GruyereRequestHandler."""
+    global stored_data
+
+    handler = WSGIHandler(environ, start_response)
+
+    # Call the method based on the request method
+    if handler.command in ['GET', 'POST']:
+        if handler.command == 'GET':
+            handler.do_GET()  # This should be defined in GruyereRequestHandler
+        else:
+            handler.do_POST()  # This should be defined in GruyereRequestHandler
+    else:
+        handler.send_response(405)  # Method Not Allowed
+        return [b"405 Method Not Allowed"]
+
+    # Collect the response body and flush it
+    response_body = handler.flush()  # Get the combined response data
+
+    # Save the database after handling the request
+    _SaveDatabase(stored_data)
+
+    return [response_body]  # Return the collected response as bytes
+
+
+
+stored_data = _LoadDatabase()
