@@ -767,12 +767,13 @@ class GruyereRequestHandler(BaseHTTPRequestHandler):
   def do_GET(self):  # part of BaseHTTPRequestHandler interface
     self.DoGetOrPost()
 
-  def DoGetOrPost(self):
+def DoGetOrPost(self):
     """Validate an http get or post request and call HandleRequest."""
 
-    url = urlparse(self.path)
-    path = url[2]
-    query = url[4]
+    path = self.path  # Use the path from WSGIHandler
+    query = self.query  # Use the query string from WSGIHandler
+
+    self.HandleRequest(path, query, server_unique_id)
 
    #Network Security settings
 
@@ -796,7 +797,7 @@ class GruyereRequestHandler(BaseHTTPRequestHandler):
 
     #path = path.replace('/' + server_unique_id, '', 1)
 
-    self.HandleRequest(path, query, server_unique_id)
+    #self.HandleRequest(path, query, server_unique_id)
 
   def HandleRequest(self, path, query, unique_id):
       """Handles an http request.
@@ -864,6 +865,8 @@ class WSGIHandler(GruyereRequestHandler):
         self.requestline = f"{environ['REQUEST_METHOD']} {environ['PATH_INFO']} HTTP/1.1"
         self.command = environ['REQUEST_METHOD']
         self.path = environ['PATH_INFO']
+        self.query = environ.get('QUERY_STRING', '')  # Get the query string directly
+
         self.request_version = "HTTP/1.1"  # Set the request version
 
         # Prepare headers and convert them to a dict-like structure
@@ -902,6 +905,7 @@ class WSGIHandler(GruyereRequestHandler):
         # Combine the collected data into a bytes object
         response_data = b''.join(self.response_body)
         return response_data  # Return response data for WSGI to send
+
 
 
 
