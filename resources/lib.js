@@ -43,7 +43,7 @@ function _finishRefreshHome(response) {
 };
 
 function _refreshHome(uniqueId) {
-  _refresh("/" + uniqueId + "/feed.gtl", _finishRefreshHome);
+  _refresh("/feed.gtl", _finishRefreshHome);
 };
 
 /**
@@ -66,5 +66,5 @@ function _finishRefreshSnippets(response) {
 };
 
 function _refreshSnippets(uniqueId, uid) {
-  _refresh("/" + uniqueId + "/feed.gtl?uid=" + uid, _finishRefreshSnippets);
+  _refresh("/feed.gtl?uid=" + uid, _finishRefreshSnippets);
 };
