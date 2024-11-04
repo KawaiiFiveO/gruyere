@@ -796,49 +796,57 @@ class GruyereRequestHandler(BaseHTTPRequestHandler):
 
     #path = path.replace('/' + server_unique_id, '', 1)
 
-
-
     self.HandleRequest(path, query, server_unique_id)
 
   def HandleRequest(self, path, query, unique_id):
-    """Handles an http request.
-
-    Args:
-      path: The path part of the url, with leading slash.
-      query: The query part of the url, without leading question mark.
-      unique_id: The unique id from the url.
-    """
-
-    path = urllib.parse.unquote(path)
-
-    if not path:
-      self._SendRedirect('/', server_unique_id)
-      return
-    params = urllib.parse.parse_qs(query)  # url.query
-    specials = {}
-    cookie = self._GetCookie('GRUYERE')
-    database = self._GetDatabase()
-    specials[SPECIAL_COOKIE] = cookie
-    specials[SPECIAL_DB] = database
-    specials[SPECIAL_PROFILE] = database.get(cookie.get(COOKIE_UID))
-    specials[SPECIAL_PARAMS] = params
-    specials[SPECIAL_UNIQUE_ID] = unique_id
-
-    if path in self._PROTECTED_URLS and not cookie[COOKIE_ADMIN]:
-      self._SendError('Invalid request', cookie, specials, params)
-      return
-
-    try:
-      handler = self._GetHandlerFunction(path)
-      if callable(handler):
-        (handler)(self, cookie, specials, params)
-      else:
-        try:
-          self._SendFileResponse(path, cookie, specials, params)
-        except IOError:
-          self._DoBadUrl(path, cookie, specials, params)
-    except KeyboardInterrupt:
-      _Exit('KeyboardInterrupt')
+      """Handles an http request.
+  
+      Args:
+        path: The path part of the url, with leading slash.
+        query: The query part of the url, without leading question mark.
+        unique_id: The unique id from the url.
+      """
+  
+      path = urllib.parse.unquote(path)
+  
+      # Serve favicon directly if requested
+      if path == '/favicon.ico':
+          try:
+              self._SendFileResponse('/favicon.ico', {}, {}, {})
+          except IOError:
+              self._SendError('Favicon not found', {}, {}, {})
+          return
+  
+      if not path:
+          self._SendRedirect('/', server_unique_id)
+          return
+  
+      params = urllib.parse.parse_qs(query)  # url.query
+      specials = {}
+      cookie = self._GetCookie('GRUYERE')
+      database = self._GetDatabase()
+      specials[SPECIAL_COOKIE] = cookie
+      specials[SPECIAL_DB] = database
+      specials[SPECIAL_PROFILE] = database.get(cookie.get(COOKIE_UID))
+      specials[SPECIAL_PARAMS] = params
+      specials[SPECIAL_UNIQUE_ID] = unique_id
+  
+      if path in self._PROTECTED_URLS and not cookie[COOKIE_ADMIN]:
+          self._SendError('Invalid request', cookie, specials, params)
+          return
+  
+      try:
+          handler = self._GetHandlerFunction(path)
+          if callable(handler):
+              (handler)(self, cookie, specials, params)
+          else:
+              try:
+                  self._SendFileResponse(path, cookie, specials, params)
+              except IOError:
+                  self._DoBadUrl(path, cookie, specials, params)
+      except KeyboardInterrupt:
+          _Exit('KeyboardInterrupt')
+  
 
 
 def _Log(message):
