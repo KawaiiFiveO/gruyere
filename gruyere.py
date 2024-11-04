@@ -878,8 +878,13 @@ class WSGIHandler(GruyereRequestHandler):
     def send_response(self, code):
         """Send an HTTP response."""
         # Call the start_response callback with headers as a list of tuples
-        self.start_response(f"{code} {self.responses[code][0]}", list(self.headers.items()))
-
+        response_headers = list(self.headers.items())
+        
+        # Add Access-Control-Expose-Headers to allow Set-Cookie to be accessed
+        response_headers.append(('Access-Control-Expose-Headers', 'Set-Cookie'))
+    
+        self.start_response(f"{code} {self.responses[code][0]}", response_headers)
+    
     def end_headers(self):
         """End the headers."""
         pass
