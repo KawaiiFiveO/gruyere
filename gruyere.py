@@ -541,10 +541,7 @@ class GruyereRequestHandler(BaseHTTPRequestHandler):
       elif extension in RESOURCE_CONTENT_TYPES:
           content_type = RESOURCE_CONTENT_TYPES[extension]
       else:
-          self._SendError(
-              'Unrecognized file type (%s).' % (filename,),
-              cookie, specials, params)
-          return
+          content_type = 'application/octet-stream'  # Default for unknown types
 
       f = None
       try:
