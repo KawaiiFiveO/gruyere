@@ -98,22 +98,22 @@ def main():
   global quit_server
   quit_server = False
 
-  quit_timer = threading.Timer(7200, lambda: _Exit('Timeout'))   
+  quit_timer = threading.Timer(7200, lambda: _Exit('Timeout'))
   quit_timer.start()
-  
-  server_name = 'localhost'  
-  server_port = 8008                                             
+
+  server_name = 'localhost'
+  server_port = 8008
 
   # The unique id is created from a CSPRNG.
-  try:                                                           
-    r = random.SystemRandom()                                    
-  except NotImplementedError:                                    
-    _Exit('Could not obtain a CSPRNG source')                    
+  try:
+    r = random.SystemRandom()
+  except NotImplementedError:
+    _Exit('Could not obtain a CSPRNG source')
 
-  global server_unique_id                                        
-  server_unique_id = str(r.randint(2**128, 2**(128+1)))          
+  global server_unique_id
+  server_unique_id = str(r.randint(2**128, 2**(128+1)))
 
- 
+
 
   global http_server
   http_server = HTTPServer((server_name, server_port),
@@ -677,7 +677,7 @@ class GruyereRequestHandler(BaseHTTPRequestHandler):
         fp=self.rfile,
         headers=self.headers,
         environ={'REQUEST_METHOD': 'POST',
-                 'CONTENT_TYPE': self.headers.get('content-type')})          
+                 'CONTENT_TYPE': self.headers.get('content-type')})
 
     upload_file = form['upload_file']
     file_data = upload_file.file.read()
@@ -751,25 +751,25 @@ class GruyereRequestHandler(BaseHTTPRequestHandler):
 
     allowed_ips = ['127.0.0.1']
 
-    request_ip = self.client_address[0]                      
-    if request_ip not in allowed_ips:                        
-      print((                                  
-          'DANGER! Request from bad ip: ' + request_ip), file=sys.stderr)      
-      _Exit('bad_ip')                                        
+    request_ip = self.client_address[0]
+    if request_ip not in allowed_ips:
+      print((
+          'DANGER! Request from bad ip: ' + request_ip), file=sys.stderr)
+      _Exit('bad_ip')
 
-    if (server_unique_id not in path                         
-        and path != '/favicon.ico'):                         
-      if path == '' or path == '/':                          
-        self._SendRedirect('/', server_unique_id)            
-        return                                               
-      else:                                                  
-        print((                                
-            'DANGER! Request without unique id: ' + path), file=sys.stderr)    
-        #_Exit('bad_id')                                      
+    if (server_unique_id not in path
+        and path != '/favicon.ico'):
+      if path == '' or path == '/':
+        self._SendRedirect('/', server_unique_id)
+        return
+      else:
+        print((
+            'DANGER! Request without unique id: ' + path), file=sys.stderr)
+        #_Exit('bad_id')
 
-    path = path.replace('/' + server_unique_id, '', 1)       
+    path = path.replace('/' + server_unique_id, '', 1)
 
-  
+
 
     self.HandleRequest(path, query, server_unique_id)
 
