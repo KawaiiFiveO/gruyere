@@ -813,7 +813,7 @@ class GruyereRequestHandler(BaseHTTPRequestHandler):
       # Serve favicon directly if requested
       if path == '/favicon.ico':
           try:
-              self._SendFileResponse('/favicon.ico', {}, {}, {})
+              self._SendFileResponse('favicon.ico', {}, {}, {})
           except IOError:
               self._SendError('Favicon not found', {}, {}, {})
           return
