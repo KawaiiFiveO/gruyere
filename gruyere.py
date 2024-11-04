@@ -569,7 +569,7 @@ class GruyereRequestHandler(BaseHTTPRequestHandler):
     The cookie is signed with a hash function.
     """
     if uid is None:
-      return (self.NULL_COOKIE, cookie_name + '=; path=/')
+      return (self.NULL_COOKIE, cookie_name + '=; path=/; Secure; HttpOnly; SameSite=None')
     database = self._GetDatabase()
     profile = database[uid]
     if profile.get('is_author', False):
