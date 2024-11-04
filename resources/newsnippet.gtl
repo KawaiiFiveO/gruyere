@@ -18,7 +18,7 @@
 [[/if:_message]]
 
 <div style='width:600'>
-<form method='get' action='/{{_unique_id}}/newsnippet2'>
+<form method='get' action='/newsnippet2'>
 <textarea name='snippet' rows='5' style='width:100%'></textarea>
 <br>
 <table summary='' style='width:100%'>

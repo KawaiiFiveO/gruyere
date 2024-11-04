@@ -1,12 +1,15 @@
 # Gruyere: vulnerable python app for security testing
 
 ## usage
-Clone and run ./gruyere.py
 
-I've added minor changes for Python 3 compatibility (the code is python2/3 compatible). You might need a `pip3 install future`
+modified version for live WSGI deployment
 
-Tested on Linux/Unix with Python 2.7 to 3.9
+with minor changes for Python 3 compatibility. You will need `pip3 install future`
+
+Tested on Linux/Windows with Python 3.12
+
 ## credits
+
 Base code is Copyright 2017 Google Inc. All Rights Reserved.
 
 This code is licensed under the http://creativecommons.org/licenses/by-nd/3.0/us

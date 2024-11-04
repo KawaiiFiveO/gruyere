@@ -45,13 +45,16 @@ except AttributeError:
 # our modules
 import data
 import gtl
-
+import html
 
 DB_FILE = '/stored-data.txt'
 SECRET_FILE = '/secret.txt'
 
-INSTALL_PATH = '.'
-RESOURCE_PATH = 'resources'
+INSTALL_PATH = '/home/OneHalf/gruyere'
+RESOURCE_PATH = '/home/OneHalf/gruyere/resources'
+
+#INSTALL_PATH = '.'
+#RESOURCE_PATH = './resources'
 
 SPECIAL_COOKIE = '_cookie'
 SPECIAL_PROFILE = '_profile'
@@ -65,9 +68,10 @@ COOKIE_AUTHOR = 'is_author'
 
 
 # Set to True to cause the server to exit after processing the current url.
-quit_server = False
+#quit_server = False
 
 # A global copy of the database so that _GetDatabase can access it.
+global stored_data
 stored_data = None
 
 # The HTTPServer object.
@@ -92,55 +96,60 @@ RESOURCE_CONTENT_TYPES = {
 }
 
 
-def main():
-  _SetWorkingDirectory()
+#def main():
+#  _SetWorkingDirectory()
+#
+#  global quit_server
+#  quit_server = False
+#
+#  quit_timer = threading.Timer(7200, lambda: _Exit('Timeout'))
+#  quit_timer.start()
+#
+#  server_name = 'localhost'
+#  server_port = 8008
+#
+#  # The unique id is created from a CSPRNG.
+#  try:
+#    r = random.SystemRandom()
+#  except NotImplementedError:
+#    _Exit('Could not obtain a CSPRNG source')
+#
+#  global server_unique_id
+#  server_unique_id = str(r.randint(2**128, 2**(128+1)))
+#
+#
+#
+#  global http_server
+#  http_server = HTTPServer((server_name, server_port),
+#                           GruyereRequestHandler)
+#
+#  print('''
+#      Gruyere started...
+#          http://%s:%d/
+#          http://%s:%d/%s/''' % (
+#              server_name, server_port, server_name, server_port,
+#              server_unique_id), file=sys.stderr)
+#
+#  global stored_data
+#  stored_data = _LoadDatabase()
+#
+#  while not quit_server:
+#    try:
+#      http_server.handle_request()
+#      _SaveDatabase(stored_data)
+#    except KeyboardInterrupt:
+#      print('\nReceived KeyboardInterrupt', file=sys.stderr)
+#      quit_server = True
+#
+#  print('\nClosing', file=sys.stderr)
+#  http_server.socket.close()
+#  _Exit('quit_server')
 
-  global quit_server
-  quit_server = False
+global quit_server
+quit_server = False
 
-  quit_timer = threading.Timer(7200, lambda: _Exit('Timeout'))
-  quit_timer.start()
-
-  server_name = 'localhost'
-  server_port = 8008
-
-  # The unique id is created from a CSPRNG.
-  try:
-    r = random.SystemRandom()
-  except NotImplementedError:
-    _Exit('Could not obtain a CSPRNG source')
-
-  global server_unique_id
-  server_unique_id = str(r.randint(2**128, 2**(128+1)))
-
-
-
-  global http_server
-  http_server = HTTPServer((server_name, server_port),
-                           GruyereRequestHandler)
-
-  print('''
-      Gruyere started...
-          http://%s:%d/
-          http://%s:%d/%s/''' % (
-              server_name, server_port, server_name, server_port,
-              server_unique_id), file=sys.stderr)
-
-  global stored_data
-  stored_data = _LoadDatabase()
-
-  while not quit_server:
-    try:
-      http_server.handle_request()
-      _SaveDatabase(stored_data)
-    except KeyboardInterrupt:
-      print('\nReceived KeyboardInterrupt', file=sys.stderr)
-      quit_server = True
-
-  print('\nClosing', file=sys.stderr)
-  http_server.socket.close()
-  _Exit('quit_server')
-
+global server_unique_id
+server_unique_id = str(random.randint(2**128, 2**(128 + 1)))
 
 def _Exit(reason):
   # use os._exit instead of sys.exit because this can't be trapped
@@ -178,18 +187,18 @@ def _LoadDatabase():
 
 
 def _SaveDatabase(save_database):
-  """Save the database to stored-data.txt.
+    """Save the database to stored-data.txt.
 
-  Args:
-    save_database: the database to save.
-  """
-
-  try:
-    f = _Open(INSTALL_PATH, DB_FILE, 'wb')
-    pickle.dump(save_database, f)
-    f.close()
-  except IOError:
-    _Log('Couldn\'t save data')
+    Args:
+        save_database: the database to save.
+    """
+    try:
+        # Using 'with' ensures the file is properly closed after writing
+        with _Open(INSTALL_PATH, DB_FILE, 'wb') as f:
+            pickle.dump(save_database, f)
+        print("Database saved successfully.")
+    except IOError as e:
+        _Log(f"Couldn't save data: {e}")
 
 
 def _Open(location, filename, mode='r'):
@@ -226,9 +235,22 @@ class GruyereRequestHandler(BaseHTTPRequestHandler):
     return stored_data
 
   def _ResetDatabase(self):
-    """Reset the database."""
-    # global stored_data
-    stored_data = data.DefaultData()
+      """Reset the database."""
+      global stored_data
+      print("Resetting the database...")
+      
+      # Delete the database file if it exists
+      #db_file_path = os.path.join(INSTALL_PATH, DB_FILE)
+      #if os.path.exists(db_file_path):
+      #    os.remove(db_file_path)
+      #    print(f"Deleted old database file at {db_file_path}")
+  
+      # Set stored_data to default values
+      stored_data = data.DefaultData()
+      print("Database reset to default data.")
+      
+      # Save the reset database to storage
+      _SaveDatabase(stored_data)
 
   def _DoLogin(self, cookie, specials, params):
     """Handles the /login url: validates the user and creates a cookie.
@@ -439,26 +461,41 @@ class GruyereRequestHandler(BaseHTTPRequestHandler):
       self._SendRedirect(redirect, specials[SPECIAL_UNIQUE_ID])
 
   def _SendHtmlResponse(self, html, new_cookie_text=None):
-    """Sends the provided html response with appropriate headers.
+      """Sends the provided HTML response with appropriate headers.
+  
+      Args:
+        html: The response HTML.
+        new_cookie_text: New cookie to set.
+      """
+      # Send the response headers
+      #self.send_response(200)
+      self.send_header('Content-type', 'text/html')
+      self.send_header('Pragma', 'no-cache')
+  
+      # Debugging output for the cookie
+      if new_cookie_text:
+          print(f"Setting cookie: {new_cookie_text}")  # Debug print to see the cookie text
+          self.send_header('Set-Cookie', new_cookie_text)
+      else:
+          print("No new cookie to set.")  # Indicate that no cookie is being set
+  
+      self.send_header('X-XSS-Protection', '0')
+  
+      # Instead of ending headers and writing to wfile, we simply collect the response body
 
-    Args:
-      html: The response.
-      new_cookie_text: New cookie to set.
-    """
-    self.send_response(200)
-    self.send_header('Content-type', 'text/html')
-    self.send_header('Pragma', 'no-cache')
-    if new_cookie_text:
-      self.send_header('Set-Cookie', new_cookie_text)
-    self.send_header('X-XSS-Protection', '0')
-    self.end_headers()
-    self.wfile.write(html.encode())
+  
+      # Write the HTML response to the response body
+      #self.send_response(200)
+      self.write(html.encode())  # Collect the HTML as bytes
+      #print("html: " + html)
+      self.send_response(200)
+  
+
 
   def _SendTextResponse(self, text, new_cookie_text=None):
     """Sends a verbatim text response."""
 
-    self._SendHtmlResponse('<pre>' + cgi.escape(text) + '</pre>',
-                           new_cookie_text)
+    self._SendHtmlResponse('<pre>' + html.escape(text) + '</pre>', new_cookie_text)
 
   def _SendTemplateResponse(self, filename, specials, params,
                             new_cookie_text=None):
@@ -476,47 +513,59 @@ class GruyereRequestHandler(BaseHTTPRequestHandler):
       template = f.read()
     finally:
       if f: f.close()
+    
+    #print("Template: " + template)
     self._SendHtmlResponse(
         gtl.ExpandTemplate(template, specials, params),
         new_cookie_text)
 
   def _SendFileResponse(self, filename, cookie, specials, params):
-    """Sends the contents of a file.
+      """Sends the contents of a file.
 
-    Args:
-      filename: The file to send.
-      cookie: The cookie for this request.
-      specials: Other special values for this request.
-      params: Cgi parameters.
-    """
-    content_type = None
-    if filename.endswith('.gtl'):
-      self._SendTemplateResponse(filename, specials, params)
-      return
+      Args:
+        filename: The file to send.
+        cookie: The cookie for this request.
+        specials: Other special values for this request.
+        params: CGI parameters.
+      """
+      content_type = None
+      if filename.endswith('.gtl'):
+          self._SendTemplateResponse(filename, specials, params)
+          return
 
-    name_only = filename[filename.rfind('/'):]
-    extension = name_only[name_only.rfind('.'):]
-    if '.' not in extension:
-      content_type = 'text/plain'
-    elif extension in RESOURCE_CONTENT_TYPES:
-      content_type = RESOURCE_CONTENT_TYPES[extension]
-    else:
-      self._SendError(
-          'Unrecognized file type (%s).' % (filename,),
-          cookie, specials, params)
-      return
-    f = None
-    try:
-      f = _Open(RESOURCE_PATH, filename, 'rb')
-      self.send_response(200)
-      self.send_header('Content-type', content_type)
-      # Always cache static resources
-      self.send_header('Cache-control', 'public, max-age=7200')
-      self.send_header('X-XSS-Protection', '0')
-      self.end_headers()
-      self.wfile.write(f.read())
-    finally:
-      if f: f.close()
+      name_only = filename[filename.rfind('/'):]
+      extension = name_only[name_only.rfind('.'):]
+
+      if '.' not in extension:
+          content_type = 'text/plain'
+      elif extension in RESOURCE_CONTENT_TYPES:
+          content_type = RESOURCE_CONTENT_TYPES[extension]
+      else:
+          self._SendError(
+              'Unrecognized file type (%s).' % (filename,),
+              cookie, specials, params)
+          return
+
+      f = None
+      try:
+          f = _Open(RESOURCE_PATH, filename, 'rb')
+          file_contents = f.read()  # Read the file contents into memory
+
+          #self.send_response(200)  # Send the response status
+          self.send_header('Content-type', content_type)  # Set the content type
+          # Always cache static resources
+          self.send_header('Cache-control', 'public, max-age=7200')
+          self.send_header('X-XSS-Protection', '0')
+          #self.send_response(200)
+
+
+          # Write the file contents to the response body
+          self.write(file_contents)  # Collect the file contents as bytes
+          self.send_response(200)
+      finally:
+          if f:
+              f.close()  # Ensure the file is closed properly
+
 
   def _SendError(self, message, cookie, specials, params, new_cookie_text=None):
     """Sends an error message (using the error.gtl template).
@@ -534,39 +583,37 @@ class GruyereRequestHandler(BaseHTTPRequestHandler):
 
   def _CreateCookie(self, cookie_name, uid):
     """Creates a cookie for this user.
-
+  
     Args:
       cookie_name: Cookie to create.
       uid: The user.
-
+  
     Returns:
       (cookie, new_cookie_text).
-
-    The cookie contains all the information we need to know about
-    the user for normal operations, including whether or not the user
-    should have access to the authoring pages or the admin pages.
-    The cookie is signed with a hash function.
     """
     if uid is None:
-      return (self.NULL_COOKIE, cookie_name + '=; path=/')
+        print("Creating NULL cookie: uid is None")
+        return (self.NULL_COOKIE, cookie_name + '=; path=/')
+    
     database = self._GetDatabase()
     profile = database[uid]
-    if profile.get('is_author', False):
-      is_author = 'author'
-    else:
-      is_author = ''
-    if profile.get('is_admin', False):
-      is_admin = 'admin'
-    else:
-      is_admin = ''
-
+  
+    is_author = 'author' if profile.get('is_author', False) else ''
+    is_admin = 'admin' if profile.get('is_admin', False) else ''
+  
     c = {COOKIE_UID: uid, COOKIE_ADMIN: is_admin, COOKIE_AUTHOR: is_author}
     c_data = '%s|%s|%s' % (uid, is_admin, is_author)
-
-    # global cookie_secret; only use positive hash values
+  
     h_data = str(hash(cookie_secret + c_data) & 0x7FFFFFF)
     c_text = '%s=%s|%s; path=/' % (cookie_name, h_data, c_data)
+  
+    # Debugging outputs
+    print(f"Creating cookie: {cookie_name}")
+    print(f"UID: {uid}, is_admin: {is_admin}, is_author: {is_author}")
+    print(f"Cookie text: {c_text}")
+  
     return (c, c_text)
+  
 
   def _GetCookie(self, cookie_name):
     """Reads, verifies and parses the cookie.
@@ -578,7 +625,7 @@ class GruyereRequestHandler(BaseHTTPRequestHandler):
       a dict containing user, is_admin, and is_author if the cookie
       is present and valid. Otherwise, None.
     """
-    cookies = self.headers.get('Cookie')
+    cookies = self.request_headers.get('Cookie')
     if isinstance(cookies, str):
       for c in cookies.split(';'):
         matched_cookie = self._MatchCookie(cookie_name, c)
@@ -637,51 +684,88 @@ class GruyereRequestHandler(BaseHTTPRequestHandler):
     """
     self._ResetDatabase()
     self._SendTextResponse('Server reset to default values...', None)
-
+    
   def _DoUpload2(self, cookie, specials, params):
-    """Handles the /upload2 url: finish the upload and save the file.
-
-    Args:
-      cookie: The cookie for this request.
-      specials: Other special values for this request.
-      params: Cgi parameters. (unused)
-    """
-    (filename, file_data) = self._ExtractFileFromRequest()
-    directory = self._MakeUserDirectory(cookie[COOKIE_UID])
-
-    message = None
-    url = None
-    try:
-      f = _Open(directory, filename, 'wb')
-      f.write(file_data)
-      f.close()
-      (host, port) = http_server.server_address
-      url = 'http://%s:%d/%s/%s/%s' % (
-          host, port, specials[SPECIAL_UNIQUE_ID], cookie[COOKIE_UID], filename)
-    except IOError as ex:
-      message = 'Couldn\'t write file %s: %s' % (filename, ex.message)
-      _Log(message)
-
-    specials['_message'] = message
-    self._SendTemplateResponse(
-        '/upload2.gtl', specials,
-        {'url': url})
-
+      """Handles the /upload2 URL: finish the upload and save the file.
+  
+      Args:
+          cookie: The cookie for this request.
+          specials: Other special values for this request.
+          params: CGI parameters. (unused)
+      """
+      (filename, file_data) = self._ExtractFileFromRequest()
+      directory = self._MakeUserDirectory(cookie[COOKIE_UID])
+  
+      message = None
+      url = None
+      try:
+          with open(f"{directory}/{filename}", 'wb') as f:
+              print(f"Writing file to: {directory}/{filename}")
+              f.write(file_data)
+              print("File write completed successfully.")
+  
+          # Get host and port from the WSGI environment
+          host = self.environ.get('HTTP_HOST', 'localhost')
+          #port = self.environ.get('SERVER_PORT', '80')  # Default to 80 if not specified
+  
+          # Generate the URL for the uploaded file
+          url = f'http://{host}/{cookie[COOKIE_UID]}/{filename}'
+          print(f"File URL generated: {url}")
+      except IOError as ex:
+          message = f'Couldn\'t write file {filename}: {ex}'
+          print(f"IOError occurred: {message}")
+          self._Log(message)
+  
+      specials['_message'] = message
+      self._SendTemplateResponse('/upload2.gtl', specials, {'url': url})
+  
+  
   def _ExtractFileFromRequest(self):
-    """Extracts the file from an upload request.
+      """Extracts the file from an upload request.
+  
+      Returns:
+        (filename, file_data)
+      """
+      print("Starting _ExtractFileFromRequest...")
+  
+      content_type = self.request_headers.get('Content-Type', '')
+      print(f"Received Content-Type: {content_type}")
+      
+      if not content_type.startswith('multipart/form-data'):
+          raise ValueError("Expected multipart/form-data content type.")
+  
+      # Read the input stream
+      content_length = int(self.request_headers.get('Content-Length', 0))
+      body = self.rfile.read(content_length)
+  
+      # Parse the multipart data
+      boundary = content_type.split('=')[1].encode('utf-8')
+      parts = body.split(b'--' + boundary)
+  
+      # Find the part that contains the uploaded file
+      for part in parts:
+          if b'Content-Disposition' in part and b'filename="' in part:
+              headers, file_data = part.split(b'\r\n\r\n', 1)
+              # Extract the filename
+              filename = self._get_filename_from_headers(headers)
+              file_data = file_data.rstrip(b'\r\n')  # Remove trailing CRLF
+              print(f"Upload file: {filename}, size: {len(file_data)} bytes")
+              return (filename, file_data)
+  
+      raise KeyError("No file part found in the request.")
+  
 
-    Returns:
-      (filename, file_data)
-    """
-    form = cgi.FieldStorage(
-        fp=self.rfile,
-        headers=self.headers,
-        environ={'REQUEST_METHOD': 'POST',
-                 'CONTENT_TYPE': self.headers.get('content-type')})
-
-    upload_file = form['upload_file']
-    file_data = upload_file.file.read()
-    return (upload_file.filename, file_data)
+  def _get_filename_from_headers(self, headers):
+      """Extract the filename from the Content-Disposition header."""
+      header_str = headers.decode('utf-8')
+      for line in header_str.splitlines():
+          if line.startswith('Content-Disposition'):
+              # Extract filename from the header
+              for part in line.split(';'):
+                  if 'filename=' in part:
+                      return part.split('=')[1].strip('"')
+      return None
+  
 
   def _MakeUserDirectory(self, uid):
     """Creates a separate directory for each user to avoid upload conflicts.
@@ -704,119 +788,253 @@ class GruyereRequestHandler(BaseHTTPRequestHandler):
     return directory
 
   def _SendRedirect(self, url, unique_id):
-    """Sends a 302 redirect.
+      """Sends a 302 redirect.
 
-    Automatically adds the unique_id.
+      Automatically adds the unique_id.
 
-    Args:
-      url: The location to redirect to which must start with '/'.
-      unique_id: The unique id to include in the url.
-    """
-    if not url:
-      url = '/'
-    url = '/' + unique_id + url
-    self.send_response(302)
-    self.send_header('Location', url)
-    self.send_header('Pragma', 'no-cache')
-    self.send_header('Content-type', 'text/html')
-    self.send_header('X-XSS-Protection', '0')
-    self.end_headers()
-    res = u'''<!DOCTYPE HTML PUBLIC '-//W3C//DTD HTML//EN'>
-    <html><body>
-    <title>302 Redirect</title>
-    Redirected <a href="%s">here</a>
-    </body></html>''' % (url)
-    self.wfile.write(res.encode())
+      Args:
+        url: The location to redirect to which must start with '/'.
+        unique_id: The unique id to include in the url.
+      """
+      if not url:
+          url = '/'
+
+      #url = '/' + unique_id + url  # Build the redirect URL
+      #self.send_response(302)  # Set the response status to 302
+      self.send_header('Location', url)  # Set the Location header
+      self.send_header('Pragma', 'no-cache')  # No cache
+      self.send_header('Content-type', 'text/html')  # Content type
+      self.send_header('X-XSS-Protection', '0')  # XSS protection header
+      self.send_response(302)
+
+      # Prepare the response body for the redirect message
+      res = f'''<!DOCTYPE HTML PUBLIC '-//W3C//DTD HTML//EN'>
+      <html><body>
+      <title>302 Redirect</title>
+      Redirected <a href="{url}">here</a>
+      </body></html>'''
+
+      # Write the response body
+      self.write(res.encode())  # Collect the response message as bytes
+
 
   def _GetHandlerFunction(self, path):
     try:
       return getattr(GruyereRequestHandler, '_Do' + path[1:].capitalize())
     except AttributeError:
       return None
-
+  
   def do_POST(self):  # part of BaseHTTPRequestHandler interface
+    print(f"Handling POST request: {self.path}")  # Debug print for POST request
     self.DoGetOrPost()
-
+  
   def do_GET(self):  # part of BaseHTTPRequestHandler interface
+    print(f"Handling GET request: {self.path}")  # Debug print for GET request
     self.DoGetOrPost()
-
+  
   def DoGetOrPost(self):
     """Validate an http get or post request and call HandleRequest."""
-
-    url = urlparse(self.path)
-    path = url[2]
-    query = url[4]
-
-   #Network Security settings
-
-    allowed_ips = ['127.0.0.1']
-
-    request_ip = self.client_address[0]
-    if request_ip not in allowed_ips:
-      print((
-          'DANGER! Request from bad ip: ' + request_ip), file=sys.stderr)
-      _Exit('bad_ip')
-
-    if (server_unique_id not in path
-        and path != '/favicon.ico'):
-      if path == '' or path == '/':
-        self._SendRedirect('/', server_unique_id)
-        return
-      else:
-        print((
-            'DANGER! Request without unique id: ' + path), file=sys.stderr)
-        #_Exit('bad_id')
-
-    path = path.replace('/' + server_unique_id, '', 1)
-
-
-
+  
+    path = self.path  # Use the path from WSGIHandler
+    query = self.query  # Use the query string from WSGIHandler
+    print(f"Request details: method={self.command}, path={path}, query={query}, server_unique_id={server_unique_id}")  # Debug info
+  
     self.HandleRequest(path, query, server_unique_id)
+  
+
+     #Network Security settings
+  
+      #allowed_ips = ['127.0.0.1']
+  #
+      #request_ip = self.client_address[0]
+      #if request_ip not in allowed_ips:
+      #  print((
+      #      'DANGER! Request from bad ip: ' + request_ip), file=sys.stderr)
+      #  _Exit('bad_ip')
+  
+      #if (server_unique_id not in path
+      #    and path != '/favicon.ico'):
+      #  if path == '' or path == '/':
+      #    self._SendRedirect('/', server_unique_id)
+      #    return
+      #  else:
+      #    print((
+      #        'DANGER! Request without unique id: ' + path), file=sys.stderr)
+      #    #_Exit('bad_id')
+  
+      #path = path.replace('/' + server_unique_id, '', 1)
+  
+      #self.HandleRequest(path, query, server_unique_id)
 
   def HandleRequest(self, path, query, unique_id):
-    """Handles an http request.
-
-    Args:
-      path: The path part of the url, with leading slash.
-      query: The query part of the url, without leading question mark.
-      unique_id: The unique id from the url.
-    """
-
+    """Handles an http request."""
+    
+    print(f"Handling request: path={path}, query={query}, unique_id={unique_id}")
     path = urllib.parse.unquote(path)
-
+    
     if not path:
-      self._SendRedirect('/', server_unique_id)
-      return
+        self._SendRedirect('/', server_unique_id)
+        return
+    
     params = urllib.parse.parse_qs(query)  # url.query
     specials = {}
     cookie = self._GetCookie('GRUYERE')
+    
+    # Debugging output for cookie retrieval
+    print(f"Retrieved cookie: {cookie}")
+    
     database = self._GetDatabase()
     specials[SPECIAL_COOKIE] = cookie
     specials[SPECIAL_DB] = database
     specials[SPECIAL_PROFILE] = database.get(cookie.get(COOKIE_UID))
     specials[SPECIAL_PARAMS] = params
     specials[SPECIAL_UNIQUE_ID] = unique_id
-
+    
     if path in self._PROTECTED_URLS and not cookie[COOKIE_ADMIN]:
-      self._SendError('Invalid request', cookie, specials, params)
-      return
-
+        self._SendError('Invalid request', cookie, specials, params)
+        return
+    
     try:
-      handler = self._GetHandlerFunction(path)
-      if callable(handler):
-        (handler)(self, cookie, specials, params)
-      else:
-        try:
-          self._SendFileResponse(path, cookie, specials, params)
-        except IOError:
-          self._DoBadUrl(path, cookie, specials, params)
+        handler = self._GetHandlerFunction(path)
+        if callable(handler):
+            (handler)(self, cookie, specials, params)
+        else:
+            try:
+                self._SendFileResponse(path, cookie, specials, params)
+            except IOError:
+                self._DoBadUrl(path, cookie, specials, params)
     except KeyboardInterrupt:
-      _Exit('KeyboardInterrupt')
+        _Exit('KeyboardInterrupt')
+  
+  
 
 
 def _Log(message):
   print(message, file=sys.stderr)
 
+class WSGIHandler(GruyereRequestHandler):
+    """WSGI handler that integrates with the WSGI server."""
 
-if __name__ == '__main__':
-  main()
+    def __init__(self, environ, start_response):
+        # Initialize base class
+        self.environ = environ
+        self.start_response = start_response
+        self.requestline = f"{environ['REQUEST_METHOD']} {environ['PATH_INFO']} HTTP/1.1"
+        self.command = environ['REQUEST_METHOD']
+        self.path = environ['PATH_INFO']
+        self.query = environ.get('QUERY_STRING', '')  # Get the query string directly
+        self.request_version = "HTTP/1.1"  # Set the request version
+        self.request_headers = self._build_request_headers(environ)
+        self.response_headers = {}  # Separate dictionary for response headers
+        self.rfile = environ['wsgi.input']  # Prepare input stream
+        self.response_body = []  # Initialize an empty list to collect response body data
+    
+    def _build_request_headers(self, environ):
+        """Build headers from WSGI environ for incoming request headers."""
+        request_headers = {}
+        # Process HTTP headers from the client request
+        for key, value in environ.items():
+            if key.startswith('HTTP_'):
+                header_key = key[5:].replace('_', '-').title()
+                request_headers[header_key] = value
+                    
+        # Add any non-HTTP headers explicitly
+        if 'CONTENT_TYPE' in environ:
+            request_headers['Content-Type'] = environ['CONTENT_TYPE']
+        if 'CONTENT_LENGTH' in environ:
+            request_headers['Content-Length'] = environ['CONTENT_LENGTH']
+        
+        return request_headers
+    
+    
+    def send_header(self, key, value):
+        """Send a header."""
+        print(f"Sending header: {key}: {value}")  # Debugging output
+        self.response_headers[key] = value
+    
+    def send_response(self, code):
+        """Send an HTTP response."""
+        headers_list = [(key, value) for key, value in self.response_headers.items()]  # Prepare headers
+        self.start_response(f"{code} {self.responses[code][0]}", headers_list)
+    
+        # Debugging output for the response headers
+        print(f"Sending response: {code} {self.responses[code][0]}")
+        print("Response headers:")
+        for header in headers_list:
+            print(f"  {header[0]}: {header[1]}")
+        
+        self.response_headers.clear()  # Clear headers after sending
+    
+
+    def write(self, data):
+        """Collect response data."""
+        self.response_body.append(data)
+
+    def flush(self):
+        """Flush the collected response data."""
+        # Combine the collected data into a bytes object
+        response_data = b''.join(self.response_body)
+        return response_data  # Return response data for WSGI to send
+
+
+
+
+def application(environ, start_response):
+    """WSGI application using the GruyereRequestHandler."""
+    #global stored_data
+
+    # Remove hop-by-hop headers
+    environ.pop('HTTP_CONNECTION', None)
+
+    handler = WSGIHandler(environ, start_response)
+
+    # Call the method based on the request method
+    if handler.command in ['GET', 'POST']:
+        if handler.command == 'GET':
+            handler.do_GET()  # This should be defined in GruyereRequestHandler
+        else:
+            handler.do_POST()  # This should be defined in GruyereRequestHandler
+    else:
+        handler.send_response(405)  # Method Not Allowed
+        return [b"405 Method Not Allowed"]
+
+    # Collect the response body and flush it
+    response_body = handler.flush()  # Get the combined response data
+
+    # Save the database after handling the request
+    _SaveDatabase(stored_data)
+
+    return [response_body]  # Return the collected response as bytes
+
+
+
+
+stored_data = _LoadDatabase()
+
+#from wsgiref.simple_server import make_server
+#
+#def main():
+#    """Main function to serve the WSGI application."""
+#    #global stored_data
+#    #stored_data = _LoadDatabase()
+#    # Set the host and port for the server
+#    host = 'localhost'
+#    port = 8000
+#
+#    # Create a WSGI server
+#    httpd = make_server(host, port, application)
+#
+#    print(f"Serving on http://{host}:{port}...")
+#    
+#    # Serve until process is killed
+#    try:
+#        httpd.serve_forever()
+#    except KeyboardInterrupt:
+#        print("\nShutting down the server...")
+#    finally:
+#        httpd.server_close()
+#        print("Server closed.")
+#
+#if __name__ == "__main__":
+#    main()
+

@@ -1,11 +1,11 @@
 {{# Copyright 2017 Google Inc. }}
 <div class='menu'>
   <span id='menu-left'>
-    <a href='/{{_unique_id}}/'>Home</a>
+    <a href='/'>Home</a>
       [[if:_cookie.uid]]
-      | <a href='/{{_unique_id}}/snippets.gtl'>My&nbsp;Snippets</a>
-      | <a href='/{{_unique_id}}/newsnippet.gtl'>New&nbsp;Snippet</a>
-      | <a href='/{{_unique_id}}/upload.gtl'>Upload</a>
+      | <a href='/snippets.gtl'>My&nbsp;Snippets</a>
+      | <a href='/newsnippet.gtl'>New&nbsp;Snippet</a>
+      | <a href='/upload.gtl'>Upload</a>
       [[/if:_cookie.uid]]
   </span>
   <span id='menu-right'>
@@ -14,14 +14,14 @@
         {{_profile.name:text}} &lt;{{_cookie.uid}}&gt;
       </span>
       [[if:_cookie.is_admin]]
-      | <a href='/{{_unique_id}}/manage.gtl'>Manage this server</a>
+      | <a href='/manage.gtl'>Manage this server</a>
       [[/if:_cookie.is_admin]]
-      | <a href='/{{_unique_id}}/editprofile.gtl'>Profile</a>
-      | <a href='/{{_unique_id}}/logout'>Sign out</a>
+      | <a href='/editprofile.gtl'>Profile</a>
+      | <a href='/logout'>Sign out</a>
       [[/if:_cookie.uid]]
       [[if:!_cookie.uid]]
-      <a href='/{{_unique_id}}/login'>Sign in</a>
-      | <a href='/{{_unique_id}}/newaccount.gtl'>Sign up</a>
+      <a href='/login'>Sign in</a>
+      | <a href='/newaccount.gtl'>Sign up</a>
       [[/if:!_cookie.uid]]
   </span>
 </div>
