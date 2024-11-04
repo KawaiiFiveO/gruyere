@@ -767,7 +767,7 @@ class GruyereRequestHandler(BaseHTTPRequestHandler):
   def do_GET(self):  # part of BaseHTTPRequestHandler interface
     self.DoGetOrPost()
 
-def DoGetOrPost(self):
+  def DoGetOrPost(self):
     """Validate an http get or post request and call HandleRequest."""
 
     path = self.path  # Use the path from WSGIHandler
@@ -775,29 +775,29 @@ def DoGetOrPost(self):
 
     self.HandleRequest(path, query, server_unique_id)
 
-   #Network Security settings
-
-    #allowed_ips = ['127.0.0.1']
-#
-    #request_ip = self.client_address[0]
-    #if request_ip not in allowed_ips:
-    #  print((
-    #      'DANGER! Request from bad ip: ' + request_ip), file=sys.stderr)
-    #  _Exit('bad_ip')
-
-    #if (server_unique_id not in path
-    #    and path != '/favicon.ico'):
-    #  if path == '' or path == '/':
-    #    self._SendRedirect('/', server_unique_id)
-    #    return
-    #  else:
-    #    print((
-    #        'DANGER! Request without unique id: ' + path), file=sys.stderr)
-    #    #_Exit('bad_id')
-
-    #path = path.replace('/' + server_unique_id, '', 1)
-
-    #self.HandleRequest(path, query, server_unique_id)
+     #Network Security settings
+  
+      #allowed_ips = ['127.0.0.1']
+  #
+      #request_ip = self.client_address[0]
+      #if request_ip not in allowed_ips:
+      #  print((
+      #      'DANGER! Request from bad ip: ' + request_ip), file=sys.stderr)
+      #  _Exit('bad_ip')
+  
+      #if (server_unique_id not in path
+      #    and path != '/favicon.ico'):
+      #  if path == '' or path == '/':
+      #    self._SendRedirect('/', server_unique_id)
+      #    return
+      #  else:
+      #    print((
+      #        'DANGER! Request without unique id: ' + path), file=sys.stderr)
+      #    #_Exit('bad_id')
+  
+      #path = path.replace('/' + server_unique_id, '', 1)
+  
+      #self.HandleRequest(path, query, server_unique_id)
 
   def HandleRequest(self, path, query, unique_id):
       """Handles an http request.
