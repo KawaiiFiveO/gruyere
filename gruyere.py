@@ -586,7 +586,7 @@ class GruyereRequestHandler(BaseHTTPRequestHandler):
 
     # global cookie_secret; only use positive hash values
     h_data = str(hash(cookie_secret + c_data) & 0x7FFFFFF)
-    c_text = '%s=%s|%s; path=/' % (cookie_name, h_data, c_data)
+    c_text = f'{cookie_name}={h_data}|{c_data}; path=/; Secure; HttpOnly; SameSite=None'
     return (c, c_text)
 
   def _GetCookie(self, cookie_name):
