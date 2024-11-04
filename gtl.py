@@ -216,11 +216,11 @@ def _ExpandVariable(var, specials, params, name, default=''):
     value = not value
 
   if escaper_name == 'text':
-    value = html.escape(str(value))
+      value = html.escape(str(value))  # Escape special characters for text
   elif escaper_name == 'html':
-    value = sanitize.SanitizeHtml(str(value))
-  elif escaper_name == 'pprint':  # for debugging
-    value = '<pre>' + cgi.escape(pprint.pformat(value)) + '</pre>'
+      value = sanitize.SanitizeHtml(str(value))  # Sanitize HTML
+  elif escaper_name == 'pprint':  # For debugging
+      value = '<pre>' + html.escape(pprint.pformat(value)) + '</pre>'  # Escape before formatting
 
   if value is None:
     value = ''
