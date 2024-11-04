@@ -569,7 +569,7 @@ class GruyereRequestHandler(BaseHTTPRequestHandler):
     The cookie is signed with a hash function.
     """
     if uid is None:
-      return (self.NULL_COOKIE, cookie_name + '=; path=/; Secure; SameSite=None; Max-Age=3600')
+      return (self.NULL_COOKIE, cookie_name + '=; path=/')
     database = self._GetDatabase()
     profile = database[uid]
     if profile.get('is_author', False):
@@ -586,7 +586,7 @@ class GruyereRequestHandler(BaseHTTPRequestHandler):
 
     # global cookie_secret; only use positive hash values
     h_data = str(hash(cookie_secret + c_data) & 0x7FFFFFF)
-    c_text = f'{cookie_name}={h_data}|{c_data}; path=/; Secure; SameSite=None; Max-Age=3600'
+    c_text = '%s=%s|%s; path=/' % (cookie_name, h_data, c_data)
     return (c, c_text)
 
   def _GetCookie(self, cookie_name):
@@ -877,12 +877,8 @@ class WSGIHandler(GruyereRequestHandler):
 
     def send_response(self, code):
         """Send an HTTP response."""
-        # Set-Cookie header if a new cookie is created
-        if hasattr(self, 'new_cookie_text'):
-            self.headers['Set-Cookie'] = self.new_cookie_text
         # Call the start_response callback with headers as a list of tuples
         self.start_response(f"{code} {self.responses[code][0]}", list(self.headers.items()))
-    
 
     def end_headers(self):
         """End the headers."""
