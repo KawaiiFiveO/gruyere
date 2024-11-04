@@ -47,11 +47,11 @@ import data
 import gtl
 import html
 
-DB_FILE = '/stored-data.txt'
-SECRET_FILE = '/secret.txt'
+#DB_FILE = '/stored-data.txt'
+#SECRET_FILE = '/secret.txt'
 
-#INSTALL_PATH = '/home/OneHalf/gruyere'
-#RESOURCE_PATH = '/home/OneHalf/gruyere/resources'
+INSTALL_PATH = '/home/OneHalf/gruyere'
+RESOURCE_PATH = '/home/OneHalf/gruyere/resources'
 
 INSTALL_PATH = '.'
 RESOURCE_PATH = './resources'
